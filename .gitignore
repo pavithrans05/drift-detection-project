@@ -1,8 +1,6 @@
 venv/
 __pycache__/
 *.pyc
-*.pkl
-*.pt
-*.log
 .ipynb_checkpoints/
-data/
+.env
+.DS_Store

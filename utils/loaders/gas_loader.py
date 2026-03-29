@@ -1,60 +1,57 @@
 import numpy as np
+import os
 
-def load_gas_batch(file_path):
-    data = []
-    
-    with open(file_path, 'r') as f:
+
+def get_max_feature_index(file_path):
+    """
+    Scan file to determine maximum feature index
+    """
+    max_idx = 0
+
+    with open(file_path, "r") as f:
         for line in f:
             parts = line.strip().split()
-            
-            # ignore label
-            features = [float(x.split(':')[1]) for x in parts[1:]]
-            data.append(features)
-    
-    return np.array(data)
+            for item in parts[1:]:
+                idx, _ = item.split(":")
+                max_idx = max(max_idx, int(idx))
+
+    return max_idx
 
 
-def load_gas_dataset(folder_path):
+def parse_line(line, num_features):
+    """
+    Parse one row of gas dataset
+    Format: label f1:v1 f2:v2 ...
+    """
+    parts = line.strip().split()
+
+    features = np.zeros(num_features)
+
+    for item in parts[1:]:
+        idx, value = item.split(":")
+        features[int(idx) - 1] = float(value)
+
+    return features
+
+
+def load_gas_batches(data_path):
+    """
+    Load all gas dataset batches
+    """
     batches = []
-    
+
     for i in range(1, 11):
-        path = f"{folder_path}/batch{i}.dat"
-        batch = load_gas_batch(path)
-        batches.append(batch)
-    
-    X = np.vstack(batches)
-    
-    # meta: drift points
-    batch_sizes = [len(b) for b in batches]
-    drift_points = np.cumsum(batch_sizes)
-    
-    return X, None, {"drift_points": drift_points}
+        file_path = os.path.join(data_path, f"batch{i}.dat")
 
-def load_gas_data(path):
-    """
-    Load full gas dataset (all batches combined)
-    Returns:
-        X: (N, F)
-        y: labels (or None)
-        meta: dict with drift points
-    """
+        num_features = get_max_feature_index(file_path)
 
-    X_all = []
-    y_all = []
+        batch_data = []
 
-    # Assuming batches: batch1 → batch10
-    for i in range(1, 11):
-        X_batch, y_batch = load_gas_batch(path, batch_id=i)
+        with open(file_path, "r") as f:
+            for line in f:
+                parsed = parse_line(line, num_features)
+                batch_data.append(parsed)
 
-        X_all.append(X_batch)
-        y_all.append(y_batch)
+        batches.append(np.array(batch_data))
 
-    X = np.vstack(X_all)
-    y = np.concatenate(y_all) if y_all[0] is not None else None
-
-    # Ground truth drift points (between batches)
-    meta = {
-        "drift_points": np.cumsum([len(b) for b in X_all[:-1]])
-    }
-
-    return X, y, meta
+    return batches
