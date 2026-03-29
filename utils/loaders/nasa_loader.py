@@ -27,3 +27,6 @@ def load_nasa_dataset(file_path):
     X = scaler.fit_transform(X)
 
     return X, df["RUL"].values, {"units": df["unit"].values}
+
+def load_nasa_data(path):
+    return load_nasa_dataset(path)

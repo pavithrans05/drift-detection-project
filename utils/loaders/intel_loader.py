@@ -41,3 +41,9 @@ def load_intel_dataset(file_path):
     X = scaler.fit_transform(X)
 
     return X, None, {"type": "stream"}
+
+def load_intel_data(path):
+    """
+    Wrapper to standardize loader interface
+    """
+    return load_intel_dataset(path)
